@@ -10,6 +10,7 @@ Then run the DDL command to create a new table.
 * or change the datasource configuration at application.properties as yours, then add the new table.
 
 # DDL create table
+```<language>
 CREATE TABLE customer(
 nik varchar(20) primary key,
 full_name varchar(50),
@@ -19,9 +20,13 @@ account_number varchar(12),
 balance numeric,
 status varchar(10)
 );
+```
 
+```<language>
 CREATE TABLE management(colname SERIAL);
+```
 
+```<language>
 CREATE TABLE transaction_history(
 id SERIAL,                               
 date date,
@@ -29,17 +34,24 @@ account_number varchar(12),
 amount numeric,
 transaction_type varchar(2)
 );
+```
 
 # Run the Application 
-*mvn clean install
-*mvn spring-boot:run
 
+```<language>
+mvn clean install
+mvn spring-boot:run
+```
 # Path URL
 
+```<language>
 http://localhost:8081/
+```
 
 # API Documentation
 
+```<language>
 http://localhost:8081/swagger-ui.html#/customer-web-controller
+```
 
 ![screenswagger.png](/screenswagger.png)
