@@ -103,7 +103,7 @@ public class CustomerManagementService {
                 return ResponseStatus.builder()
                         .responseCode(StatusConstant.RESPONSE_CODE_FAILED)
                         .responseStatus(StatusConstant.STATUS_FAILED)
-                        .message("Status nasabah Approved, status nasabah tidak dapat diubah")
+                        .message("Status nasabah tidak dapat diubah")
                         .build();
             }
 
