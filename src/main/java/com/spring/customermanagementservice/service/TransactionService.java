@@ -46,27 +46,32 @@ public class TransactionService {
     public TransactionResponse cashWithdrawal(TransactionRequest request) throws Exception {
         TransactionResponse response = new TransactionResponse();
         try {
-            TransactionResponse inquiryResponse = inquiry(request.getAccountNumber());
-            int existingBalance = inquiryResponse.getBalance().intValueExact();
-            if (request.getAmount() > existingBalance) {
-                response.setAccountNumber(inquiryResponse.getAccountNumber());
-                response.setBalance(inquiryResponse.getBalance());
-                response.setMessage("Transaksi gagal, Saldo tidak mencukupi");
+            //validasi request
+            if (request.getAmount() <= 0 || request.getAccountNumber().isEmpty()) {
+                response.setMessage("Transaksi gagal, input tidak sesuai");
+            } else {
+                TransactionResponse inquiryResponse = inquiry(request.getAccountNumber());
+                int existingBalance = inquiryResponse.getBalance().intValueExact();
+                if (request.getAmount() > existingBalance) {
+                    response.setAccountNumber(inquiryResponse.getAccountNumber());
+                    response.setBalance(inquiryResponse.getBalance());
+                    response.setMessage("Transaksi gagal, Saldo tidak mencukupi");
+                } else {
+                    //hitung saldo setelah tarik tunai
+                    Balance countBalance = new Balance(existingBalance, request.getAmount());
+                    int finalBalance = countBalance.cashWithdrawal();
+
+                    //update saldo nasabah
+                    updateCustomerData(request, finalBalance);
+
+                    //store transaction history
+                    storeHistory(request, StatusConstant.TARIK_CATEGORY);
+
+                    response.setAccountNumber(inquiryResponse.getAccountNumber());
+                    response.setBalance(BigDecimal.valueOf(finalBalance));
+                    response.setMessage(StatusConstant.TRANSACTION_MESSAGE_SUCCESS);
+                }
             }
-
-            //hitung saldo setelah tarik tunai
-            Balance countBalance = new Balance(existingBalance, request.getAmount());
-            int finalBalance = countBalance.cashWithdrawal();
-
-            //update saldo nasabah
-            updateCustomerData(request, finalBalance);
-
-            //store transaction history
-            storeHistory(request, StatusConstant.TARIK_CATEGORY);
-
-            response.setAccountNumber(inquiryResponse.getAccountNumber());
-            response.setBalance(BigDecimal.valueOf(finalBalance));
-            response.setMessage(StatusConstant.TRANSACTION_MESSAGE_SUCCESS);
 
         } catch (Exception ex) {
             log.error("Error when save data {}", ex);
@@ -79,23 +84,27 @@ public class TransactionService {
     public TransactionResponse cashDeposit(TransactionRequest request) throws Exception {
         TransactionResponse response = new TransactionResponse();
         try {
-            TransactionResponse inquiryResponse = inquiry(request.getAccountNumber());
-            int existingBalance = inquiryResponse.getBalance().intValueExact();
+            //validasi request
+            if (request.getAmount() <= 0 || request.getAccountNumber().isEmpty()) {
+                response.setMessage("Transaksi gagal, input tidak sesuai");
+            } else {
+                TransactionResponse inquiryResponse = inquiry(request.getAccountNumber());
+                int existingBalance = inquiryResponse.getBalance().intValueExact();
 
-            //hitung saldo setelah setor tunai
-            Balance countBalance = new Balance(existingBalance, request.getAmount());
-            int finalBalance = countBalance.cashDeposit();
+                //hitung saldo setelah setor tunai
+                Balance countBalance = new Balance(existingBalance, request.getAmount());
+                int finalBalance = countBalance.cashDeposit();
 
-            //update saldo nasabah
-            updateCustomerData(request, finalBalance);
+                //update saldo nasabah
+                updateCustomerData(request, finalBalance);
 
-            //store transaction history
-            storeHistory(request, StatusConstant.SETOR_CATEGORY);
+                //store transaction history
+                storeHistory(request, StatusConstant.SETOR_CATEGORY);
 
-            response.setAccountNumber(inquiryResponse.getAccountNumber());
-            response.setBalance(BigDecimal.valueOf(finalBalance));
-            response.setMessage(StatusConstant.TRANSACTION_MESSAGE_SUCCESS);
-
+                response.setAccountNumber(inquiryResponse.getAccountNumber());
+                response.setBalance(BigDecimal.valueOf(finalBalance));
+                response.setMessage(StatusConstant.TRANSACTION_MESSAGE_SUCCESS);
+            }
         } catch (Exception ex) {
             log.error("Error when save data {}", ex);
             throw new Exception(ex);
