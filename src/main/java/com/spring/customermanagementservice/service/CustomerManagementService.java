@@ -1,7 +1,7 @@
 package com.spring.customermanagementservice.service;
 
 import com.spring.customermanagementservice.domain.CustomerRequest;
-import com.spring.customermanagementservice.domain.ResponseStatus;
+import com.spring.customermanagementservice.domain.Response;
 import com.spring.customermanagementservice.domain.constant.StatusConstant;
 import com.spring.customermanagementservice.model.Customer;
 import com.spring.customermanagementservice.repository.CustomerRepository;
@@ -20,11 +20,18 @@ public class CustomerManagementService {
     private CustomerRepository customerRepository;
 
     // Pendaftaran nasabah
-    public ResponseStatus addCustomer(CustomerRequest request) throws Exception {
+    public Response addCustomer(CustomerRequest request) throws Exception {
         try {
+            if(request.equals(null) || request.getNik().isEmpty() || request.getPhoneNumber().isEmpty()) {
+                return Response.builder()
+                        .responseCode(StatusConstant.RESPONSE_CODE_FAILED)
+                        .responseStatus(StatusConstant.STATUS_FAILED)
+                        .message("Pendaftaran gagal, input tidak sesuai")
+                        .build();
+            }
             Customer customerExisting = customerRepository.findOneByNikAndPhoneNumber(request.getNik(), request.getPhoneNumber());
             if (customerExisting != null) {
-                return ResponseStatus.builder()
+                return Response.builder()
                         .responseCode(StatusConstant.RESPONSE_CODE_FAILED)
                         .responseStatus(StatusConstant.STATUS_FAILED)
                         .message("Pendaftaran gagal, nik dan nomor telepon telah terdaftar")
@@ -46,7 +53,7 @@ public class CustomerManagementService {
             throw new Exception(ex);
         }
 
-        return ResponseStatus.builder()
+        return Response.builder()
                 .responseCode(StatusConstant.RESPONSE_CODE_SUCCESS)
                 .responseStatus(StatusConstant.STATUS_SUCCESS)
                 .message("Pendaftaran berhasil dilakukan, status nasabah pending menunggu proses aprroval")
@@ -54,18 +61,33 @@ public class CustomerManagementService {
     }
 
     // Approval dan update data nasabah
-    public ResponseStatus approvalCustomer(String nik) throws Exception {
+    public Response approvalCustomer(CustomerRequest request) throws Exception {
         String accountNumber = "";
+        String fullName = "";
         try {
-            Customer customer = customerRepository.findOneByNik(nik);
-            if (customer == null ) {
-                return ResponseStatus.builder()
+            if (request.getNik().isEmpty()) {
+                return Response.builder()
+                        .responseCode(StatusConstant.RESPONSE_CODE_FAILED)
+                        .responseStatus(StatusConstant.STATUS_FAILED)
+                        .message("Input tidak sesuai")
+                        .build();
+            }
+
+            Customer customer = customerRepository.findOneByNik(request.getNik());
+            if (customer == null) {
+                return Response.builder()
                         .responseCode(StatusConstant.RESPONSE_CODE_FAILED)
                         .responseStatus(StatusConstant.STATUS_FAILED)
                         .message("NIK belum terdaftar, silahkan melakukan pendaftaran nasabah")
                         .build();
+            } else if (customer.getStatus() == StatusConstant.APPROVED) {
+                return Response.builder()
+                        .responseCode(StatusConstant.RESPONSE_CODE_FAILED)
+                        .responseStatus(StatusConstant.STATUS_FAILED)
+                        .message("Status nasabah sudah approve")
+                        .build();
             }
-
+            fullName = customer.getFullName();
             //generate random account number
             accountNumber = String.valueOf(generateAccountNumber());
 
@@ -80,19 +102,29 @@ public class CustomerManagementService {
             throw new Exception(ex);
         }
 
-        return ResponseStatus.builder()
+        return Response.builder()
                 .responseCode(StatusConstant.RESPONSE_CODE_SUCCESS)
                 .responseStatus(StatusConstant.STATUS_SUCCESS)
+                .fullName(fullName)
+                .accountNumber(accountNumber)
+                .balance(BigDecimal.valueOf(0))
                 .message("Proses approval berhasil, nomor rekening nasabah : ".concat(accountNumber))
                 .build();
     }
 
     // Reject dan update data nasabah
-    public ResponseStatus rejectCustomer(String nik) throws Exception {
+    public Response rejectCustomer(CustomerRequest request) throws Exception {
         try {
-            Customer customer = customerRepository.findOneByNik(nik);
+            if (request.getNik().isEmpty()) {
+                return Response.builder()
+                        .responseCode(StatusConstant.RESPONSE_CODE_FAILED)
+                        .responseStatus(StatusConstant.STATUS_FAILED)
+                        .message("Input tidak sesuai")
+                        .build();
+            }
+            Customer customer = customerRepository.findOneByNik(request.getNik());
             if (customer == null) {
-                return ResponseStatus.builder()
+                return Response.builder()
                         .responseCode(StatusConstant.RESPONSE_CODE_FAILED)
                         .responseStatus(StatusConstant.STATUS_FAILED)
                         .message("NIK belum terdaftar, data nasabah tidak ditemukan")
@@ -100,7 +132,7 @@ public class CustomerManagementService {
             }
 
             if (customer.getStatus() != "PENDING") {
-                return ResponseStatus.builder()
+                return Response.builder()
                         .responseCode(StatusConstant.RESPONSE_CODE_FAILED)
                         .responseStatus(StatusConstant.STATUS_FAILED)
                         .message("Status nasabah tidak dapat diubah")
@@ -115,7 +147,7 @@ public class CustomerManagementService {
             throw new Exception(ex);
         }
 
-        return ResponseStatus.builder()
+        return Response.builder()
                 .responseCode(StatusConstant.RESPONSE_CODE_SUCCESS)
                 .responseStatus(StatusConstant.STATUS_SUCCESS)
                 .message("Proses reject berhasil, status nasabah reject")

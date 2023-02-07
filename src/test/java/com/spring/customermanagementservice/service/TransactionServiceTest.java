@@ -1,7 +1,7 @@
 package com.spring.customermanagementservice.service;
 
+import com.spring.customermanagementservice.domain.Response;
 import com.spring.customermanagementservice.domain.TransactionRequest;
-import com.spring.customermanagementservice.domain.TransactionResponse;
 import com.spring.customermanagementservice.domain.constant.StatusConstant;
 import com.spring.customermanagementservice.model.Customer;
 import com.spring.customermanagementservice.repository.CustomerRepository;
@@ -13,7 +13,6 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.math.BigDecimal;
@@ -51,7 +50,11 @@ public class TransactionServiceTest {
 
     @Test
     public void inquiry() throws Exception {
-        TransactionResponse response = transactionService.inquiry("9878987898");
+        TransactionRequest request = TransactionRequest.builder()
+                .accountNumber("9878987898")
+                .build();
+
+        Response response = transactionService.inquiry(request);
         assertNotNull(response);
     }
 
@@ -62,7 +65,7 @@ public class TransactionServiceTest {
                 .amount(1000000)
                 .build();
 
-        TransactionResponse response = transactionService.cashWithdrawal(request);
+        Response response = transactionService.cashWithdrawal(request);
         assertNotNull(response);
     }
 
@@ -73,7 +76,7 @@ public class TransactionServiceTest {
                 .amount(3000000)
                 .build();
 
-        TransactionResponse response = transactionService.cashDeposit(request);
+        Response response = transactionService.cashDeposit(request);
         assertNotNull(response);
     }
 

@@ -12,13 +12,15 @@ import java.math.BigDecimal;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class TransactionResponse implements Serializable {
+public class Response implements Serializable {
 
-    private static final long serialVersionUID = -5442352405843653647L;
+    private static final long serialVersionUID = -2024878730735688197L;
 
+    private String  responseCode;
+    private String  responseStatus;
+    private String  message;
     private String fullName;
     private String accountNumber;
     private BigDecimal balance;
-    private String message;
 
 }

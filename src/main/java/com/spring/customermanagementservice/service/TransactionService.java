@@ -1,7 +1,7 @@
 package com.spring.customermanagementservice.service;
 
+import com.spring.customermanagementservice.domain.Response;
 import com.spring.customermanagementservice.domain.TransactionRequest;
-import com.spring.customermanagementservice.domain.TransactionResponse;
 import com.spring.customermanagementservice.domain.constant.StatusConstant;
 import com.spring.customermanagementservice.model.TransactionHistory;
 import com.spring.customermanagementservice.model.Customer;
@@ -25,16 +25,31 @@ public class TransactionService {
     private CustomerRepository customerRepository;
 
     //Inquiry
-    public TransactionResponse inquiry(String accountNumber) throws Exception {
-        TransactionResponse response = new TransactionResponse();
+    public Response inquiry(TransactionRequest request) throws Exception {
+        Response response = new Response();
         try {
-            Customer customer = customerRepository.findOneByAccountNumber(accountNumber);
-            if (customer == null) throw new Exception("Data nasabah tidak ditemukan");
-            response = TransactionResponse.builder()
-                    .fullName(customer.getFullName())
-                    .accountNumber(customer.getAccountNumber())
-                    .balance(customer.getBalance())
-                    .build();
+            //validasi request
+            if(request.getAccountNumber().isEmpty()) {
+                response.setResponseCode(StatusConstant.RESPONSE_CODE_FAILED);
+                response.setResponseStatus(StatusConstant.STATUS_FAILED);
+                response.setMessage("Input tidak sesuai");
+            } else {
+                Customer customer = customerRepository.findOneByAccountNumber(request.getAccountNumber());
+                if (customer == null) {
+                    response.setResponseCode(StatusConstant.RESPONSE_CODE_FAILED);
+                    response.setResponseStatus(StatusConstant.STATUS_FAILED);
+                    response.setMessage("Data nasabah tidak ditemukan");
+                } else {
+                    response = Response.builder()
+                            .responseCode(StatusConstant.RESPONSE_CODE_SUCCESS)
+                            .responseStatus(StatusConstant.STATUS_SUCCESS)
+                            .fullName(customer.getFullName())
+                            .accountNumber(customer.getAccountNumber())
+                            .balance(customer.getBalance())
+                            .message(StatusConstant.TRANSACTION_MESSAGE_SUCCESS)
+                            .build();
+                }
+            }
         } catch (Exception ex) {
             log.error("Error when get data {}", ex);
             throw new Exception(ex);
@@ -43,16 +58,20 @@ public class TransactionService {
     }
 
     //Tarik Tunai
-    public TransactionResponse cashWithdrawal(TransactionRequest request) throws Exception {
-        TransactionResponse response = new TransactionResponse();
+    public Response cashWithdrawal(TransactionRequest request) throws Exception {
+        Response response = new Response();
         try {
             //validasi request
             if (request.getAmount() <= 0 || request.getAccountNumber().isEmpty()) {
+                response.setResponseCode(StatusConstant.RESPONSE_CODE_FAILED);
+                response.setResponseStatus(StatusConstant.STATUS_FAILED);
                 response.setMessage("Transaksi gagal, input tidak sesuai");
             } else {
-                TransactionResponse inquiryResponse = inquiry(request.getAccountNumber());
+                Response inquiryResponse = inquiry(request);
                 int existingBalance = inquiryResponse.getBalance().intValueExact();
                 if (request.getAmount() > existingBalance) {
+                    response.setResponseCode(StatusConstant.RESPONSE_CODE_FAILED);
+                    response.setResponseStatus(StatusConstant.STATUS_FAILED);
                     response.setAccountNumber(inquiryResponse.getAccountNumber());
                     response.setBalance(inquiryResponse.getBalance());
                     response.setMessage("Transaksi gagal, Saldo tidak mencukupi");
@@ -67,6 +86,8 @@ public class TransactionService {
                     //store transaction history
                     storeHistory(request, StatusConstant.TARIK_CATEGORY);
 
+                    response.setResponseCode(StatusConstant.RESPONSE_CODE_SUCCESS);
+                    response.setResponseStatus(StatusConstant.STATUS_SUCCESS);
                     response.setAccountNumber(inquiryResponse.getAccountNumber());
                     response.setBalance(BigDecimal.valueOf(finalBalance));
                     response.setMessage(StatusConstant.TRANSACTION_MESSAGE_SUCCESS);
@@ -81,14 +102,16 @@ public class TransactionService {
     }
 
     //Setor Tunai
-    public TransactionResponse cashDeposit(TransactionRequest request) throws Exception {
-        TransactionResponse response = new TransactionResponse();
+    public Response cashDeposit(TransactionRequest request) throws Exception {
+        Response response = new Response();
         try {
             //validasi request
             if (request.getAmount() <= 0 || request.getAccountNumber().isEmpty()) {
+                response.setResponseCode(StatusConstant.RESPONSE_CODE_FAILED);
+                response.setResponseStatus(StatusConstant.STATUS_FAILED);
                 response.setMessage("Transaksi gagal, input tidak sesuai");
             } else {
-                TransactionResponse inquiryResponse = inquiry(request.getAccountNumber());
+                Response inquiryResponse = inquiry(request);
                 int existingBalance = inquiryResponse.getBalance().intValueExact();
 
                 //hitung saldo setelah setor tunai
@@ -101,6 +124,8 @@ public class TransactionService {
                 //store transaction history
                 storeHistory(request, StatusConstant.SETOR_CATEGORY);
 
+                response.setResponseCode(StatusConstant.RESPONSE_CODE_SUCCESS);
+                response.setResponseStatus(StatusConstant.STATUS_SUCCESS);
                 response.setAccountNumber(inquiryResponse.getAccountNumber());
                 response.setBalance(BigDecimal.valueOf(finalBalance));
                 response.setMessage(StatusConstant.TRANSACTION_MESSAGE_SUCCESS);

@@ -2,10 +2,9 @@ package com.spring.customermanagementservice.webcontroller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spring.customermanagementservice.CustomerManagementServiceApplication;
-import com.spring.customermanagementservice.domain.ResponseStatus;
+import com.spring.customermanagementservice.domain.Response;
 import com.spring.customermanagementservice.domain.TransactionRequest;
 import com.spring.customermanagementservice.domain.CustomerRequest;
-import com.spring.customermanagementservice.domain.TransactionResponse;
 import com.spring.customermanagementservice.domain.constant.StatusConstant;
 import com.spring.customermanagementservice.service.TransactionService;
 import com.spring.customermanagementservice.service.CustomerManagementService;
@@ -19,7 +18,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import java.math.BigDecimal;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -51,8 +49,11 @@ public class CustomerWebControllerTest {
                 .phoneNumber("085767677876")
                 .build();
 
-        ResponseStatus response = new ResponseStatus("00", "SUCCESS",
-                "Pendaftaran berhasil dilakukan, status nasabah pending menunggu proses aprroval");
+        Response response = Response.builder()
+                .responseCode(StatusConstant.RESPONSE_CODE_SUCCESS)
+                .responseStatus(StatusConstant.STATUS_SUCCESS)
+                .message("Pendaftaran berhasil dilakukan, status nasabah pending menunggu proses aprroval")
+                .build();
 
         Mockito.when(customerManagementService.addCustomer(request)).thenReturn(response);
 
@@ -66,24 +67,54 @@ public class CustomerWebControllerTest {
 
     @Test
     public void approvalCustomer() throws Exception {
-        ResponseStatus response = new ResponseStatus("00", "SUCCESS",
-                "Proses approval berhasil, rekening nasabah berhasil dibuat");
+        CustomerRequest request = CustomerRequest.builder()
+                .fullName("Budianto")
+                .address("Jalan Cempaka, Sleman, Yogyakarta")
+                .nik("3403109877897779")
+                .phoneNumber("085767677876")
+                .build();
 
-        Mockito.when(customerManagementService.approvalCustomer("3403109877897779")).thenReturn(response);
+        Response response = Response.builder()
+                .responseCode(StatusConstant.RESPONSE_CODE_SUCCESS)
+                .responseStatus(StatusConstant.STATUS_SUCCESS)
+                .message("Proses approval berhasil, rekening nasabah berhasil dibuat")
+                .fullName("Budianto")
+                .accountNumber("5656252752")
+                .balance(new BigDecimal(0))
+                .build();
 
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/v1/approvalnasabah/3403109877897779"))
+        Mockito.when(customerManagementService.approvalCustomer(request)).thenReturn(response);
+
+        this.mockMvc.perform(post("/v1/approvalnasabah")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(request))
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(new ObjectMapper().writeValueAsString(response)))
                 .andExpect(status().isOk());
     }
 
     @Test
     public void rejectCustomer() throws Exception {
-        ResponseStatus response = new ResponseStatus("00", "SUCCESS",
-                "Proses reject berhasil, status nasabah reject");
+        CustomerRequest request = CustomerRequest.builder()
+                .fullName("Budianto")
+                .address("Jalan Cempaka, Sleman, Yogyakarta")
+                .nik("3403109877897779")
+                .phoneNumber("085767677876")
+                .build();
 
-        Mockito.when(customerManagementService.rejectCustomer("3403109877897767")).thenReturn(response);
+        Response response = Response.builder()
+                .responseCode(StatusConstant.RESPONSE_CODE_SUCCESS)
+                .responseStatus(StatusConstant.STATUS_SUCCESS)
+                .message("Proses reject berhasil, status nasabah reject")
+                .build();
 
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/v1/rejectnasabah/3403109877897767"))
+        Mockito.when(customerManagementService.rejectCustomer(request)).thenReturn(response);
+
+
+        this.mockMvc.perform(post("/v1/rejectnasabah")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(request))
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(new ObjectMapper().writeValueAsString(response)))
                 .andExpect(status().isOk());
     }
@@ -95,8 +126,14 @@ public class CustomerWebControllerTest {
                 .amount(1000000)
                 .build();
 
-        TransactionResponse response = new TransactionResponse("Budianto","1234987652",
-                BigDecimal.valueOf(11000000), StatusConstant.TRANSACTION_MESSAGE_SUCCESS);
+        Response response = Response.builder()
+                .responseCode(StatusConstant.RESPONSE_CODE_SUCCESS)
+                .responseStatus(StatusConstant.STATUS_SUCCESS)
+                .message("")
+                .fullName("Rian A")
+                .accountNumber("1234987652")
+                .balance(new BigDecimal(0))
+                .build();
 
         Mockito.when(transactionService.cashWithdrawal(request)).thenReturn(response);
 
@@ -115,8 +152,14 @@ public class CustomerWebControllerTest {
                 .amount(2000000)
                 .build();
 
-        TransactionResponse response = new TransactionResponse("Budianto","1234987652",
-                BigDecimal.valueOf(13000000), StatusConstant.TRANSACTION_MESSAGE_SUCCESS);
+        Response response = Response.builder()
+                .responseCode(StatusConstant.RESPONSE_CODE_SUCCESS)
+                .responseStatus(StatusConstant.STATUS_SUCCESS)
+                .message("")
+                .fullName("Rian A")
+                .accountNumber("1234987652")
+                .balance(new BigDecimal(0))
+                .build();
 
         Mockito.when(transactionService.cashDeposit(request)).thenReturn(response);
 
@@ -129,13 +172,25 @@ public class CustomerWebControllerTest {
 
     @Test
     public void inquiry() throws Exception {
-        TransactionResponse response = new TransactionResponse("Budianto","1234565432",
-                BigDecimal.valueOf(1000000),null);
+        TransactionRequest request = TransactionRequest.builder()
+                .accountNumber("1234987652")
+                .build();
 
-        Mockito.when(transactionService.inquiry("8978673458")).thenReturn(response);
+        Response response = Response.builder()
+                .responseCode(StatusConstant.RESPONSE_CODE_SUCCESS)
+                .responseStatus(StatusConstant.STATUS_SUCCESS)
+                .message("")
+                .fullName("Rian A")
+                .accountNumber("1234987652")
+                .balance(new BigDecimal(0))
+                .build();
 
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/v1/ceksaldo/8978673458"))
-                .andExpect(content().json(new ObjectMapper().writeValueAsString(response)))
+        Mockito.when(transactionService.inquiry(request)).thenReturn(response);
+
+        this.mockMvc.perform(post("/v1/ceksaldo")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(request))
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }
 
