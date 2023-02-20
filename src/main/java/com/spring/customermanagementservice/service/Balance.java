@@ -1,22 +1,22 @@
 package com.spring.customermanagementservice.service;
 
-public class Balance extends Customer {
+public class Balance implements Customer {
 
-    private int balance;
+    private int amountBalance;
     private int amount;
 
     public Balance (int balance, int amount) {
-        this.balance = balance;
+        this.amountBalance = balance;
         this.amount = amount;
     }
 
     @Override
     public int cashWithdrawal() {
-        return balance - amount;
+        return amountBalance - amount;
     }
 
     @Override
     public int cashDeposit() {
-        return balance + amount;
+        return amountBalance + amount;
     }
 }

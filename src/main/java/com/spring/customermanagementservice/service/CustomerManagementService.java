@@ -22,7 +22,7 @@ public class CustomerManagementService {
     // Pendaftaran nasabah
     public Response addCustomer(CustomerRequest request) throws Exception {
         try {
-            if(request.equals(null) || request.getNik().isEmpty() || request.getPhoneNumber().isEmpty()) {
+            if(request == null || request.getNik().isEmpty() || request.getPhoneNumber().isEmpty()) {
                 return Response.builder()
                         .responseCode(StatusConstant.RESPONSE_CODE_FAILED)
                         .responseStatus(StatusConstant.STATUS_FAILED)
@@ -80,7 +80,7 @@ public class CustomerManagementService {
                         .responseStatus(StatusConstant.STATUS_FAILED)
                         .message("NIK belum terdaftar, silahkan melakukan pendaftaran nasabah")
                         .build();
-            } else if (customer.getStatus() == StatusConstant.APPROVED) {
+            } else if (customer.getStatus().equals(StatusConstant.APPROVED)) {
                 return Response.builder()
                         .responseCode(StatusConstant.RESPONSE_CODE_FAILED)
                         .responseStatus(StatusConstant.STATUS_FAILED)
@@ -131,7 +131,7 @@ public class CustomerManagementService {
                         .build();
             }
 
-            if (customer.getStatus() != "PENDING") {
+            if (!customer.getStatus().equals("PENDING")) {
                 return Response.builder()
                         .responseCode(StatusConstant.RESPONSE_CODE_FAILED)
                         .responseStatus(StatusConstant.STATUS_FAILED)
