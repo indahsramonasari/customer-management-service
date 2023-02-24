@@ -36,11 +36,14 @@ transaction_type varchar(2)
 );
 ```
 
-# Run the Application 
+# Run the Application With Docker
 
 ```<language>
 mvn clean install
-mvn spring-boot:run
+
+docker build --tag=message-server:latest .
+
+docker run -p8887:8081 message-server:latest
 ```
 # Path URL
 
