@@ -23,10 +23,6 @@ status varchar(10)
 ```
 
 ```<language>
-CREATE TABLE management(colname SERIAL);
-```
-
-```<language>
 CREATE TABLE transaction_history(
 id SERIAL,                               
 date date,
