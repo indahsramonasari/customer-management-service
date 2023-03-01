@@ -37,9 +37,9 @@ transaction_type varchar(2)
 ```<language>
 mvn clean install
 
-docker build --tag=message-server:latest .
+docker build --tag=customer-management-service:latest .
 
-docker run -p8887:8081 message-server:latest
+docker run -p8081:8081 customer-management-service:latest
 ```
 # Path URL
 
